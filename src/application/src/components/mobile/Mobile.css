@@ -1,0 +1,217 @@
+.rdr-mobile-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.rdr-mobile-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 2px solid var(--color-divider);
+}
+.rdr-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+.rdr-mobile-brand-mark {
+  width: 12px;
+  height: 12px;
+  background: var(--color-accent);
+  display: block;
+}
+.rdr-mobile-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+.rdr-mobile-live-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--color-accent);
+  display: block;
+  animation: rdrBlink 1.6s steps(1, end) infinite;
+}
+
+.rdr-mobile-kpis {
+  flex: none;
+  display: flex;
+  border-bottom: 2px solid var(--color-divider);
+}
+.rdr-mobile-kpi {
+  flex: 1;
+  padding: 10px 14px;
+  border-right: 1px solid var(--color-divider);
+}
+.rdr-mobile-kpi:last-child {
+  border-right: 0;
+}
+.rdr-mobile-kpi-value {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  display: block;
+}
+.rdr-mobile-kpi-label {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.rdr-mobile-map {
+  flex: none;
+  height: 250px;
+  background: var(--color-surface);
+}
+
+.rdr-mobile-sheet {
+  flex: 1;
+  min-height: 0;
+  border-top: 2px solid var(--color-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rdr-mobile-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-divider);
+  margin: 10px auto;
+  flex: none;
+}
+.rdr-mobile-sheet-title {
+  padding: 0 16px 8px;
+  flex: none;
+}
+.rdr-mobile-sheet-list {
+  flex: 1;
+  overflow: auto;
+}
+.rdr-mobile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-top: 1px solid var(--color-divider);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.rdr-mobile-row-bar {
+  width: 4px;
+  align-self: stretch;
+  flex: none;
+}
+.rdr-mobile-row-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+}
+.rdr-mobile-row-meta {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.rdr-mobile-tabbar {
+  flex: none;
+  display: flex;
+  border-top: 2px solid var(--color-text);
+  padding-bottom: 22px;
+}
+.rdr-mobile-tab {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  opacity: 0.55;
+}
+.rdr-mobile-tab.active {
+  color: var(--color-accent);
+  opacity: 1;
+}
+
+/* — detalhe mobile — */
+.rdr-mobile-back {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.rdr-mobile-faixa {
+  flex: none;
+  padding: 8px 16px;
+  background: var(--niv-vermelho-bg);
+  color: var(--niv-vermelho-fg);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rdr-mobile-detalhe-title {
+  padding: 14px 16px 8px;
+  font-size: 23px;
+  margin: 0;
+}
+.rdr-mobile-detalhe-sub {
+  padding: 0 16px 12px;
+  font-size: 12.5px;
+  opacity: 0.75;
+  margin: 0;
+}
+.rdr-mobile-minimapa {
+  flex: none;
+  height: 170px;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+.rdr-mobile-cronologia {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 16px;
+}
+.rdr-mobile-cronologia-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-divider);
+  font-size: 12.5px;
+}
+.rdr-mobile-cronologia-hora {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 12px;
+}
+.rdr-mobile-footer {
+  flex: none;
+  padding: 12px 16px calc(12px + 22px);
+  border-top: 2px solid var(--color-text);
+}

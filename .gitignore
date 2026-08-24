@@ -1,3 +1,12 @@
+# .NET (src/api)
+bin/
+obj/
+*.user
+.vs/
+
+# Gerado por `npm run gen:api` a partir de docs/api/openapi.yaml — não commitar
+src/application/src/api/schema.d.ts
+
 # Logs
 logs
 *.log
