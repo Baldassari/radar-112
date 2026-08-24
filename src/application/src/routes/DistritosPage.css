@@ -1,0 +1,61 @@
+.rdr-distritos-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 36px;
+  padding: 24px 28px 56px;
+  min-width: 1150px;
+}
+
+.rdr-distrito-table-row {
+  cursor: pointer;
+}
+.rdr-distrito-table-row[data-selected='true'] {
+  background: var(--color-surface);
+}
+
+.rdr-peso-bar-track {
+  width: 100%;
+  background: var(--color-divider);
+  height: 8px;
+}
+.rdr-peso-bar-fill {
+  height: 8px;
+  background: var(--color-text);
+}
+
+.rdr-foco {
+  border-top: 2px solid var(--color-text);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.rdr-foco-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rdr-foco-mapa {
+  height: 300px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.rdr-concelho-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 28px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12.5px;
+}
+.rdr-concelho-bar-track {
+  height: 8px;
+  background: transparent;
+}
+.rdr-concelho-bar-fill {
+  height: 8px;
+}
+.rdr-concelho-count {
+  text-align: right;
+}

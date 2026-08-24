@@ -1,0 +1,39 @@
+.rdr-historico-search {
+  border-top: 2px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  padding: 16px 28px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.rdr-historico-search .field {
+  margin: 0;
+}
+.rdr-historico-q {
+  max-width: 320px;
+}
+
+.rdr-historico-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 36px;
+  padding: 24px 28px 56px;
+}
+
+.rdr-dia-cell {
+  white-space: nowrap;
+}
+.rdr-dia-cell.hidden {
+  opacity: 0;
+}
+
+.rdr-historico-side {
+  border-top: 2px solid var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 16px;
+}
+.rdr-historico-side-section h6 {
+  margin: 0 0 12px;
+}

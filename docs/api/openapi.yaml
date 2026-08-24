@@ -1,0 +1,370 @@
+openapi: 3.1.0
+info:
+  title: Radar 112 API
+  description: >
+    Contrato do portal público de ocorrências da Proteção Civil. Fonte da
+    verdade para os tipos consumidos pelo frontend (gerados via
+    openapi-typescript) e para a implementação futura do backend
+    (.NET 10 + WolverineFx). Todos os dados descritos aqui são fictícios
+    enquanto o endpoint real da Proteção Civil não for mapeado — ver
+    docs/plan/Radar 112 portal mockups/design_handoff_radar_112/README.md.
+  version: 0.1.0
+servers:
+  - url: /api
+
+paths:
+  /ocorrencias:
+    get:
+      operationId: listOcorrencias
+      summary: Lista ocorrências, com filtros de mapa/timeline/tabela.
+      parameters:
+        - name: distrito
+          in: query
+          description: Seleção única de distrito.
+          schema: { type: string }
+        - name: niveis
+          in: query
+          style: form
+          explode: true
+          description: Multi-seleção de criticidade (OR dentro do grupo).
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/Nivel' }
+        - name: tipos
+          in: query
+          style: form
+          explode: true
+          description: Multi-seleção de natureza (OR dentro do grupo).
+          schema:
+            type: array
+            items: { type: string }
+        - name: view
+          in: query
+          description: Ativas exclui Encerrada; Todas inclui tudo; Histórico só Encerrada.
+          schema:
+            type: string
+            enum: [Ativas, Todas, Histórico]
+            default: Ativas
+        - name: q
+          in: query
+          description: Pesquisa livre por localidade (concelho/freguesia).
+          schema: { type: string }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: Página de ocorrências.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/OcorrenciaResumo' }
+                  total:
+                    type: integer
+                    description: Total de ocorrências registadas este mês, para o rodapé da tabela.
+                  nextCursor:
+                    type: string
+                    nullable: true
+
+  /ocorrencias/{id}:
+    get:
+      operationId: getOcorrencia
+      summary: Ficha completa de uma ocorrência (vista Detalhe).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, example: 'RD-2026-08417' }
+      responses:
+        '200':
+          description: Ocorrência encontrada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OcorrenciaDetalhe' }
+        '404':
+          description: Ocorrência inexistente.
+
+  /ocorrencias/stream:
+    get:
+      operationId: streamOcorrencias
+      summary: Server-Sent Events com criações/atualizações near-real-time.
+      description: >
+        text/event-stream. Tipos de evento: `ocorrencia.created` (payload:
+        OcorrenciaResumo), `ocorrencia.updated` (payload: OcorrenciaResumo) e
+        `heartbeat` (payload: { "syncedAt": string<date-time> }, emitido a
+        cada poucos segundos para repor o contador "há N s" mesmo sem
+        novidades). OpenAPI não tipa SSE nativamente — este documento serve
+        de contrato de referência para os dois lados; implementar no backend
+        com `TypedResults.ServerSentEvents<T>` (.NET 10).
+      responses:
+        '200':
+          description: Stream aberto.
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /distritos:
+    get:
+      operationId: listDistritos
+      summary: Estatísticas por distrito, ordenadas por ativas desc.
+      responses:
+        '200':
+          description: Lista de distritos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DistritoStats' }
+
+  /distritos/{nome}:
+    get:
+      operationId: getDistrito
+      summary: Distrito em foco, com concelhos mais afetados.
+      parameters:
+        - name: nome
+          in: path
+          required: true
+          schema: { type: string, example: 'Leiria' }
+      responses:
+        '200':
+          description: Estatísticas detalhadas do distrito.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DistritoStats' }
+        '404':
+          description: Distrito inexistente.
+
+  /historico:
+    get:
+      operationId: getHistorico
+      summary: Arquivo de ocorrências encerradas + série de 14 dias.
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: de
+          in: query
+          schema: { type: string, format: date }
+        - name: ate
+          in: query
+          schema: { type: string, format: date }
+        - name: tipo
+          in: query
+          schema: { type: string }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 12, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Resultados do período + série de 14 dias + KPIs do período.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, ultimosCatorzeDias, kpis]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/OcorrenciaResumo' }
+                  total: { type: integer }
+                  nextCursor: { type: string, nullable: true }
+                  ultimosCatorzeDias:
+                    type: array
+                    items: { $ref: '#/components/schemas/HistoricoDia' }
+                  kpis: { $ref: '#/components/schemas/HistoricoKpis' }
+
+  /kpis:
+    get:
+      operationId: getKpis
+      summary: KPIs da faixa superior da vista Mapa.
+      responses:
+        '200':
+          description: KPIs atuais.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Kpis' }
+
+components:
+  schemas:
+    Nivel:
+      type: string
+      enum: [vermelho, laranja, amarelo]
+
+    Estado:
+      type: string
+      description: Vocabulário público da ANEPC (a confirmar contra a fonte real).
+      enum:
+        - Despacho
+        - Em Curso
+        - Chegada ao TO
+        - Em Resolução
+        - Em Conclusão
+        - Vigilância
+        - Encerrada
+
+    OcorrenciaResumo:
+      type: object
+      required:
+        - id
+        - hora
+        - tipo
+        - subtipo
+        - concelho
+        - freguesia
+        - distrito
+        - niv
+        - estado
+        - meios
+        - operacionais
+        - lat
+        - lon
+        - dur
+      properties:
+        id: { type: string, example: 'RD-2026-08417' }
+        dia:
+          type: string
+          format: date
+          description: >
+            Dia do alerta. Só populado em ocorrências devolvidas por
+            /historico (o mapa/timeline em direto não precisa de data, só de
+            hora, por serem sempre do próprio dia).
+        hora: { type: string, description: "Hora do alerta, 'HH:mm'." }
+        tipo: { type: string, example: 'Acidente rodoviário' }
+        subtipo: { type: string, example: 'Colisão múltipla, 6 viaturas' }
+        concelho: { type: string }
+        freguesia:
+          type: string
+          description: "Freguesia ou referência de via, ex. 'A1 · km 213'."
+        distrito: { type: string }
+        niv: { $ref: '#/components/schemas/Nivel' }
+        estado: { $ref: '#/components/schemas/Estado' }
+        meios: { type: integer }
+        operacionais: { type: integer }
+        lat: { type: number, format: double }
+        lon: { type: number, format: double }
+        dur:
+          type: string
+          description: "Duração desde o alerta, ex. '3h 36m'."
+
+    OcorrenciaDetalhe:
+      allOf:
+        - { $ref: '#/components/schemas/OcorrenciaResumo' }
+        - type: object
+          required: [viaturasEnvolvidas, viaCortada, cronologia, meiosNoLocal, imprensa, pontoDeSituacao, condicoesNoLocal]
+          properties:
+            viaturasEnvolvidas: { type: integer }
+            viaCortada: { type: boolean }
+            pontoDeSituacao: { type: string }
+            condicoesNoLocal:
+              type: array
+              items:
+                type: object
+                required: [label, valor]
+                properties:
+                  label: { type: string }
+                  valor: { type: string }
+            cronologia:
+              type: array
+              items: { $ref: '#/components/schemas/CronologiaEntry' }
+            meiosNoLocal:
+              type: array
+              items: { $ref: '#/components/schemas/Meio' }
+            imprensa:
+              type: array
+              items: { $ref: '#/components/schemas/ImprensaLink' }
+
+    CronologiaEntry:
+      type: object
+      required: [hora, titulo, texto]
+      properties:
+        hora: { type: string }
+        titulo: { type: string }
+        texto: { type: string }
+
+    Meio:
+      type: object
+      required: [entidade, meios, operacionais, chegada, estado]
+      properties:
+        entidade: { type: string, example: 'Bombeiros de Leiria' }
+        meios: { type: integer }
+        operacionais: { type: integer }
+        chegada: { type: string, description: "'HH:mm' ou '—'." }
+        estado: { type: string, enum: ['No local', 'Em trânsito'] }
+
+    ImprensaLink:
+      type: object
+      required: [fonte, hora, titulo, url]
+      properties:
+        fonte: { type: string }
+        hora: { type: string }
+        titulo: { type: string }
+        url: { type: string, format: uri }
+
+    ConcelhoAfetado:
+      type: object
+      required: [concelho, count]
+      properties:
+        concelho: { type: string }
+        count: { type: integer }
+
+    DistritoStats:
+      type: object
+      required: [distrito, ativas, vermelho, laranja, amarelo, meios, pesoRelativo]
+      properties:
+        distrito: { type: string }
+        ativas: { type: integer }
+        vermelho: { type: integer }
+        laranja: { type: integer }
+        amarelo: { type: integer }
+        meios: { type: integer }
+        operacionais: { type: integer }
+        tempoMedioResposta: { type: string, description: "ex. '18min'." }
+        naturezaMaisFrequente: { type: string }
+        pesoRelativo: { type: number, description: 'Percentagem 0–100 do total nacional.' }
+        concelhosMaisAfetados:
+          type: array
+          items: { $ref: '#/components/schemas/ConcelhoAfetado' }
+
+    HistoricoDia:
+      type: object
+      required: [dia, count]
+      properties:
+        dia: { type: string, format: date }
+        count: { type: integer }
+
+    HistoricoKpis:
+      type: object
+      required: [ocorrencias, tempoMedioResposta, pctAcidentesRodoviarios, avisosVermelhos]
+      properties:
+        ocorrencias: { type: integer }
+        tempoMedioResposta: { type: string }
+        pctAcidentesRodoviarios: { type: number }
+        avisosVermelhos: { type: integer }
+
+    Kpis:
+      type: object
+      required: [ocorrenciasAtivas, nivelVermelho, meiosNoTerreno, operacionais, distritosComOcorrencias]
+      properties:
+        ocorrenciasAtivas: { type: integer }
+        nivelVermelho: { type: integer }
+        meiosNoTerreno: { type: integer }
+        operacionais: { type: integer }
+        distritosComOcorrencias: { type: integer }
+        avisoVermelhoAtivo:
+          type: object
+          nullable: true
+          required: [titulo, descricao]
+          properties:
+            titulo: { type: string }
+            descricao: { type: string }

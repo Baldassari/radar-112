@@ -1,0 +1,117 @@
+.rdr-filters {
+  border-right: 2px solid var(--color-divider);
+  overflow: auto;
+  padding: 18px 0 24px;
+}
+
+.rdr-filters-header {
+  padding: 0 16px 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.rdr-filters-header h6 {
+  margin: 0;
+}
+
+.rdr-filters-field {
+  padding: 0 16px 16px;
+}
+
+.rdr-filters-block {
+  border-top: 1px solid var(--color-divider);
+  padding: 14px 16px 16px;
+}
+.rdr-filters-block h6 {
+  margin: 0 0 4px;
+  opacity: 0.6;
+}
+.rdr-filters-hint {
+  font-size: 11px;
+  opacity: 0.5;
+  margin: 0 0 10px;
+  line-height: 1.35;
+}
+
+.rdr-crit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rdr-crit-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  background: transparent;
+  color: var(--color-text);
+}
+.rdr-crit-row.active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+.rdr-crit-swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.rdr-crit-name {
+  flex: 1;
+}
+.rdr-crit-count {
+  opacity: 0.6;
+}
+.rdr-crit-row.active .rdr-crit-count {
+  opacity: 0.85;
+}
+
+.rdr-distrito-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+}
+.rdr-distrito-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  background: transparent;
+  color: var(--color-text);
+}
+.rdr-distrito-row.active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+.rdr-distrito-row .rdr-crit-count {
+  opacity: 0.6;
+}
+
+.rdr-tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rdr-tipo-chip {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.rdr-tipo-chip.active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
