@@ -20,3 +20,46 @@ a { color: inherit; text-decoration: none; }
 .timeline { padding: 26px 19px 16px; border-left: 1px solid var(--line); }.timeline-heading h2 { margin-top: 2px; }.tabs { display: flex; gap: 18px; margin-top: 21px; border-bottom: 1px solid var(--line); }.tabs button { padding: 0 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); cursor: pointer; font-size: 11px; }.tabs button.active { border-color: var(--red); color: var(--ink); font-weight: 700; }.timeline-list { max-height: 510px; overflow: auto; }.timeline-item { position: relative; display: grid; grid-template-columns: 35px 8px 1fr auto; gap: 9px; width: 100%; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; cursor: pointer; }.timeline-item:hover, .timeline-item.selected { background: #f1efeb; }.timeline-item time { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; }.timeline-line { width: 3px; height: 100%; min-height: 41px; background: var(--line); }.timeline-line.red { background: var(--red); }.timeline-line.orange { background: var(--orange); }.timeline-line.yellow { background: var(--yellow); }.timeline-copy { display: flex; flex-direction: column; gap: 4px; }.timeline-copy strong { font-size: 11px; }.timeline-copy small { color: var(--muted); font-size: 9px; line-height: 1.2; }.timeline-tags { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }.timeline-tags em { padding: 4px 5px; background: #e8e5e0; color: var(--muted); font-size: 8px; font-style: normal; white-space: nowrap; }.timeline-tags em.red, .timeline-tags em.orange { color: white; }.timeline-footer { margin: 15px 0 0; color: var(--muted); font-size: 10px; }.timeline-footer a { float: right; color: var(--red); font-weight: 700; }
 @media (max-width: 1180px) { .topbar { gap: 20px; padding: 0 20px; }.workspace { grid-template-columns: 215px minmax(400px, 1fr); }.timeline { grid-column: 1 / -1; border-top: 1px solid var(--line); border-left: 0; }.timeline-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 22px; }.metrics { grid-template-columns: repeat(3, 1fr); }.warning { grid-column: span 3; border-top: 1px solid var(--line); } }
 @media (max-width: 700px) { .topbar { height: auto; min-height: 64px; flex-wrap: wrap; padding: 15px; gap: 17px; }.nav-links { order: 3; width: 100%; height: 35px; justify-content: space-between; gap: 10px; overflow-x: auto; }.nav-links a { white-space: nowrap; }.live-status { margin-left: auto; }.live-status .muted { display: none; }.subscribe { display: none; }.metrics { grid-template-columns: repeat(2, 1fr); }.metric { min-height: 75px; padding: 14px 16px; }.metric strong { font-size: 23px; }.warning { grid-column: span 2; min-height: 76px; }.workspace { display: flex; flex-direction: column; }.filters { border-right: 0; border-bottom: 1px solid var(--line); padding: 19px 15px; }.filters .section-heading { margin-bottom: 0; }.filters > .field-label, .filters > .search-field, .filters > .filter-section { display: none; }.filters::after { content: 'Abrir filtros  →'; display: block; margin-top: 10px; color: var(--red); font-size: 11px; font-weight: 700; }.map-column { padding: 21px 15px 20px; }.map-header { align-items: flex-start; flex-direction: column; gap: 12px; }.map-header h1 { font-size: 22px; }.map-stage { height: 330px; }.legend { gap: 10px; }.selected-occurrence { margin-top: 12px; }.occurrence-stats { gap: 15px; justify-content: space-between; }.timeline { padding: 21px 15px; }.timeline-list { display: block; max-height: none; }.timeline-item { grid-template-columns: 34px 6px 1fr auto; gap: 7px; }.timeline-tags { display: none; }.timeline-footer a { float: none; display: block; margin-top: 8px; } }
+
+/* Desktop geometry follows the mockup: controls, map, then a persistent detail rail. */
+.topbar { height: 68px; padding-inline: 30px; background: var(--panel); }
+.brand { font-size: 20px; letter-spacing: .11em; }
+.nav-links { gap: 29px; }
+.metrics { grid-template-columns: repeat(5, minmax(112px, 1fr)) minmax(290px, 2.2fr); }
+.metric, .warning { min-height: 84px; padding: 16px 20px; }
+.workspace { grid-template-columns: 248px minmax(520px, 1fr) 382px; min-height: calc(100vh - 152px); }
+.filters { padding: 25px 20px; }
+.filter-section { border-top: 1px solid var(--line); padding-top: 3px; }
+.filter-section:first-of-type { border-top: 0; }
+.map-column { padding: 27px 30px 30px; }
+.map-header h1 { font-size: 26px; }
+.map-stage { height: min(455px, 46vh); min-height: 360px; margin-top: 24px; border-color: #cbc9c3; }
+.map-stage::before { content: 'AVEIRO     PORTO     GUARDA     LEIRIA     COIMBRA     SANTARÉM     SETÚBAL     FARO'; position: absolute; inset: 11px 15px auto; color: rgba(32,30,29,.3); font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .08em; word-spacing: 16px; line-height: 1.6; z-index: 1; }
+.portugal-shape { width: 48%; height: 88%; left: 26%; top: 6%; background: #cbd2ca; opacity: .9; }
+.right-rail { min-width: 0; background: var(--panel); border-left: 1px solid var(--line); }
+.right-rail .selected-occurrence { margin: 0; padding: 24px 22px 21px; border: 0; border-bottom: 1px solid var(--line); background: #f8f6f2; }
+.right-rail .occurrence-title h2 { font-size: 15px; }
+.right-rail .occurrence-description { max-width: 290px; line-height: 1.45; }
+.right-rail .occurrence-stats { gap: 20px; }
+.right-rail .timeline { border: 0; padding: 22px 20px 16px; background: transparent; }
+.timeline-list { max-height: calc(100vh - 390px); }
+.timeline-item { padding: 13px 7px; }
+.timeline-item.selected { box-shadow: inset 2px 0 0 var(--red); }
+
+@media (max-width: 1180px) {
+	.workspace { grid-template-columns: 215px minmax(400px, 1fr); }
+	.right-rail { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(340px, .8fr) 1.2fr; border-top: 1px solid var(--line); border-left: 0; }
+	.right-rail .selected-occurrence { border-right: 1px solid var(--line); }
+	.right-rail .timeline { border: 0; }
+}
+
+@media (max-width: 700px) {
+	.metrics { grid-template-columns: repeat(2, 1fr); }
+	.workspace { display: flex; flex-direction: column; }
+	.map-column { padding: 21px 15px 20px; }
+	.map-stage { height: 330px; min-height: 0; margin-top: 18px; }
+	.right-rail { display: block; border-left: 0; border-top: 1px solid var(--line); }
+	.right-rail .selected-occurrence { border-right: 0; padding: 18px 15px; }
+	.right-rail .timeline { padding: 21px 15px; }
+	.timeline-list { max-height: none; }
+}
