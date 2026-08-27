@@ -22,8 +22,6 @@
     "topojson-client": "^3.1.0"
   },
   "devDependencies": {
-    "@oxlint/win32-x64": "^1.43.0",
-    "@rolldown/binding-win32-x64-msvc": "^1.2.5",
     "@types/d3-array": "^3.2.2",
     "@types/d3-geo": "^3.1.1",
     "@types/d3-scale": "^4.0.9",
