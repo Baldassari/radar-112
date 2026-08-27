@@ -1,0 +1,22 @@
+.rdr-search-input {
+  width: 260px;
+}
+.rdr-distrito-select {
+  width: 170px;
+  height: 36px;
+}
+
+.rdr-natureza-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+.rdr-natureza-sub {
+  opacity: 0.6;
+  font-size: 11.5px;
+}
+
+.rdr-niv-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

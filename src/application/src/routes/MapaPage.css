@@ -1,0 +1,27 @@
+.rdr-mapa-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 1200px;
+}
+
+.rdr-mapa-body {
+  display: grid;
+  grid-template-columns: 238px minmax(380px, 1fr) 396px;
+  flex: 1;
+  min-height: 0;
+}
+
+.rdr-mapa-map-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.rdr-mapa-map-body {
+  flex: 1;
+  min-height: 0;
+  background: var(--color-surface);
+}

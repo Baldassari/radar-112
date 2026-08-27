@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-ad74d2c6-9278-43c3-9c05-7c3b792c08b6/styles.css">
+<script src="_ds/modernist-ad74d2c6-9278-43c3-9c05-7c3b792c08b6/_ds_bundle.js"></script>
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<style>
+html,body{margin:0;height:100%}
+body{background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+a{color:var(--color-accent)}a:hover{color:var(--color-accent-700)}
+@keyframes rdrBlink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes rdrIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;min-height:660px;overflow-x:auto;overflow-y:hidden">
+
+  <div class="nav" style="flex:none;gap:0;padding:0 20px;background:var(--color-bg);min-width:1200px">
+    <div class="nav-brand" style="display:flex;align-items:center;gap:10px;padding:12px 24px 12px 0;margin-right:0;border-right:2px solid var(--color-divider)">
+      <span style="width:14px;height:14px;background:var(--color-accent);display:block"></span>
+      <span style="letter-spacing:-0.02em;white-space:nowrap">RADAR 112</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:4px;padding:0 16px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+        <button type="button" onClick="{{ t.onPick }}" style="border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-size:13.5px;padding:8px 12px;color:{{ t.fg }};font-weight:{{ t.weight }};border-bottom:2px solid {{ t.line }}">{{ t.label }}</button>
+      </sc-for>
+    </nav>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:18px;padding-left:24px">
+      <div style="display:flex;align-items:center;gap:8px;border-left:2px solid var(--color-divider);padding-left:18px">
+        <span style="width:8px;height:8px;background:var(--color-accent);display:block;animation:rdrBlink 1.6s steps(1,end) infinite"></span>
+        <span style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-family:var(--font-heading);font-weight:800">Em direto</span>
+        <span style="font-size:11px;opacity:.55;font-variant-numeric:tabular-nums">· dados da Proteção Civil, {{ agoLabel }}</span>
+      </div>
+      <button type="button" class="btn btn-secondary" style="font-size:12.5px">Subscrever alertas</button>
+    </div>
+  </div>
+
+  <sc-if value="{{ isMapa }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;flex:1;min-height:0;min-width:1200px">
+
+    <div style="flex:none;display:flex;align-items:stretch;border-bottom:2px solid var(--color-divider)">
+      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="5">
+        <div style="flex:1;padding:12px 20px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px">
+          <span style="font-family:var(--font-heading);font-weight:800;font-size:26px;line-height:1;letter-spacing:-0.02em;color:{{ s.color }}">{{ s.value }}</span>
+          <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;opacity:.6">{{ s.label }}</span>
+        </div>
+      </sc-for>
+      <div style="flex:none;width:300px;padding:12px 20px;display:flex;align-items:center;gap:12px;background:var(--color-accent);color:var(--color-bg)">
+        <span style="font-family:var(--font-heading);font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">Aviso vermelho</span>
+        <span style="font-size:11.5px;line-height:1.3">Chuva forte e vento — Leiria, Coimbra, Aveiro até às 22:00</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:238px minmax(380px,1fr) 396px;flex:1;min-height:0">
+
+      <aside style="border-right:2px solid var(--color-divider);overflow:auto;padding:18px 0 24px">
+        <div style="padding:0 16px 12px;display:flex;align-items:baseline;justify-content:space-between">
+          <h6 style="margin:0">Filtros</h6>
+          <button type="button" class="btn btn-ghost" onClick="{{ clearFilters }}" style="font-size:11px;padding:0">Limpar</button>
+        </div>
+        <div style="padding:0 16px 16px">
+          <div class="field">
+            <label for="rdr-loc">Localidade</label>
+            <input id="rdr-loc" class="input" type="search" placeholder="Concelho ou freguesia">
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--color-divider);padding:14px 16px 16px">
+          <h6 style="margin:0 0 4px;opacity:.6">Criticidade</h6>
+          <p style="font-size:11px;opacity:.5;margin:0 0 10px;line-height:1.35">Escala de aviso da Proteção Civil.</p>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ nivs }}" as="c" hint-placeholder-count="3">
+              <button type="button" onClick="{{ c.onToggle }}" style="display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border:0;cursor:pointer;font:inherit;font-size:13px;text-align:left;background:{{ c.bg }};color:{{ c.fg }}">
+                <span style="width:10px;height:10px;flex:none;display:block;background:{{ c.dot }}"></span>
+                <span style="flex:1">{{ c.label }}</span>
+                <span style="font-size:11px;opacity:.6;font-variant-numeric:tabular-nums">{{ c.n }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--color-divider);padding:14px 16px 16px">
+          <h6 style="margin:0 0 10px;opacity:.6">Distrito</h6>
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <sc-for list="{{ districts }}" as="d" hint-placeholder-count="8">
+              <button type="button" onClick="{{ d.onPick }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:5px 8px;border:0;cursor:pointer;font:inherit;font-size:13px;text-align:left;background:{{ d.bg }};color:{{ d.fg }}">
+                <span style="flex:1">{{ d.nome }}</span>
+                <span style="font-size:11px;opacity:.6;font-variant-numeric:tabular-nums">{{ d.n }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--color-divider);padding:14px 16px 0">
+          <h6 style="margin:0 0 10px;opacity:.6">Natureza</h6>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <sc-for list="{{ tipos }}" as="t" hint-placeholder-count="3">
+              <button type="button" onClick="{{ t.onToggle }}" class="tag" style="border:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:11px;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </aside>
+
+      <main style="position:relative;min-width:0;display:flex;flex-direction:column">
+        <div style="flex:none;display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase">{{ mapScopeLabel }}</span>
+          <span style="font-size:11.5px;opacity:.6">{{ mapCountLabel }}</span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:16px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.75">
+            <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;display:block;background:{{ l.dot }}"></span>{{ l.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div ref="{{ mapWrap }}" style="flex:1;position:relative;min-height:0;background:var(--color-surface)">
+          <x-import component-from-global-scope="pt-map" from="./portugal-map.js" markers="{{ markersJson }}" selected="{{ selectedId }}" district="{{ districtAttr }}" style="position:absolute;inset:0" hint-size="100%,100%"></x-import>
+        </div>
+      </main>
+
+      <aside style="border-left:2px solid var(--color-divider);display:flex;flex-direction:column;min-height:0">
+        <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none;background:var(--color-surface);border-bottom:2px solid var(--color-text);padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);font-family:var(--font-heading);font-weight:800">{{ sel.id }}</span>
+              <span class="tag" style="background:{{ sel.tagBg }};color:{{ sel.tagFg }};white-space:nowrap">Nível {{ sel.nivLabel }}</span>
+            </div>
+            <div style="font-family:var(--font-heading);font-weight:800;font-size:19px;line-height:1.1;letter-spacing:-0.015em">{{ sel.tipo }}</div>
+            <div style="font-size:12.5px;opacity:.75">{{ sel.subtipo }} · {{ sel.localFull }}</div>
+            <hr class="hr" style="margin:4px 0">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div style="display:flex;flex-direction:column"><span style="font-size:16px;font-family:var(--font-heading);font-weight:800">{{ sel.meios }}</span><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">Meios</span></div>
+              <div style="display:flex;flex-direction:column"><span style="font-size:16px;font-family:var(--font-heading);font-weight:800">{{ sel.operacionais }}</span><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">Operacionais</span></div>
+              <div style="display:flex;flex-direction:column"><span style="font-size:16px;font-family:var(--font-heading);font-weight:800">{{ sel.duracao }}</span><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">Desde o alerta</span></div>
+            </div>
+            <button type="button" class="btn btn-primary btn-block" onClick="{{ openDetail }}" style="margin-top:6px">Abrir detalhe da ocorrência →</button>
+          </div>
+        </sc-if>
+        <div style="flex:none;padding:14px 16px 12px;border-bottom:1px solid var(--color-divider)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <h6 style="margin:0">Timeline</h6>
+            <span style="margin-left:auto;font-size:11px;opacity:.55;font-variant-numeric:tabular-nums">{{ feedStamp }}</span>
+          </div>
+          <div class="seg" style="width:100%">
+            <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+              <button type="button" onClick="{{ v.onPick }}" style="flex:1;padding:7px 10px;border:0;border-left:1px solid var(--color-divider);cursor:pointer;font:inherit;font-size:12.5px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1;overflow:auto;min-height:0">
+          <sc-for list="{{ feed }}" as="o" hint-placeholder-count="9">
+            <button type="button" onClick="{{ o.onPick }}" style="display:grid;grid-template-columns:46px 5px minmax(0,1fr) auto;gap:10px;align-items:stretch;width:100%;text-align:left;padding:11px 14px;border:0;border-bottom:1px solid var(--color-divider);cursor:pointer;font:inherit;background:{{ o.rowBg }};animation:{{ o.anim }}">
+              <span style="font-size:12px;font-variant-numeric:tabular-nums;opacity:.6">{{ o.hora }}</span>
+              <span style="display:block;width:5px;background:{{ o.color }}"></span>
+              <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;line-height:1.2">{{ o.tipo }}</span>
+                <span style="font-size:12px;opacity:.7">{{ o.localFull }}</span>
+                <span style="font-size:11px;opacity:.5">{{ o.meta }}</span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+                <span class="tag" style="white-space:nowrap;background:{{ o.tagBg }};color:{{ o.tagFg }}">{{ o.nivLabel }}</span>
+                <span style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;opacity:.5">{{ o.estado }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="flex:none;padding:10px 14px;border-top:2px solid var(--color-divider);display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;opacity:.6">{{ feedFooter }}</span>
+          <button type="button" class="btn btn-ghost" onClick="{{ goHistorico }}" style="margin-left:auto;font-size:11.5px">Ver histórico →</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isLista }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;min-height:0;min-width:1100px">
+    <div style="padding:24px 28px 56px">
+      <div style="display:flex;align-items:flex-end;gap:20px;margin-bottom:18px">
+        <div>
+          <h3 style="margin:0 0 4px">Ocorrências</h3>
+          <p style="margin:0;font-size:12.5px;opacity:.6">Todas as ocorrências registadas nas últimas 12 horas, atualizadas ao minuto.</p>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:flex-end;gap:10px">
+          <div class="field" style="width:260px"><label for="rdr-q">Pesquisar</label><input id="rdr-q" class="input" type="search" placeholder="Código, natureza ou local"></div>
+          <div class="field" style="width:170px"><label for="rdr-d">Distrito</label>
+            <select id="rdr-d" class="input"><option>Todos os distritos</option><option>Aveiro</option><option>Coimbra</option><option>Faro</option><option>Leiria</option><option>Porto</option><option>Santarém</option><option>Setúbal</option><option>Vila Real</option></select>
+          </div>
+          <button type="button" class="btn btn-secondary" style="height:36px">Exportar CSV</button>
+        </div>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Hora</th><th>Código</th><th>Natureza</th><th>Local</th><th>Distrito</th><th>Nível</th><th>Estado</th>
+            <th style="text-align:right">Meios</th><th style="text-align:right">Operacionais</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{ lista }}" as="o" hint-placeholder-count="12">
+            <tr>
+              <td style="font-variant-numeric:tabular-nums;font-size:13px;opacity:.75">{{ o.hora }}</td>
+              <td style="font-size:12px;letter-spacing:.02em;opacity:.75">{{ o.id }}</td>
+              <td style="font-family:var(--font-heading);font-weight:800;font-size:13px">{{ o.tipo }}<span style="display:block;font-family:var(--font-body);font-weight:400;font-size:12px;opacity:.6">{{ o.subtipo }}</span></td>
+              <td style="font-size:13px">{{ o.localFull }}</td>
+              <td style="font-size:13px;opacity:.8">{{ o.distrito }}</td>
+              <td><span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px"><span style="width:10px;height:10px;display:block;background:{{ o.color }}"></span>{{ o.nivLabel }}</span></td>
+              <td><span class="tag" style="white-space:nowrap;background:{{ o.estadoBg }};color:{{ o.estadoFg }}">{{ o.estado }}</span></td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">{{ o.meios }}</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">{{ o.operacionais }}</td>
+              <td style="text-align:right"><button type="button" class="btn btn-ghost" onClick="{{ o.onOpen }}" style="font-size:12px">Detalhe →</button></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="display:flex;align-items:center;gap:12px;padding-top:14px">
+        <span style="font-size:11.5px;opacity:.55">{{ listaFooter }}</span>
+        <button type="button" class="btn btn-secondary" style="margin-left:auto;font-size:12px">Carregar mais</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isHistorico }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;min-height:0;min-width:1100px">
+    <div style="padding:24px 28px 56px">
+      <h3 style="margin:0 0 4px">Histórico</h3>
+      <p style="margin:0 0 18px;font-size:12.5px;opacity:.6">Arquivo de ocorrências encerradas. Pesquise por período, distrito ou natureza.</p>
+
+      <div style="display:flex;align-items:flex-end;gap:12px;padding:16px 0;border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-divider)">
+        <div class="field" style="flex:1;max-width:320px"><label for="h-q">Texto livre</label><input id="h-q" class="input" type="search" placeholder="Ex.: colisão A1"></div>
+        <div class="field" style="width:150px"><label for="h-de">De</label><input id="h-de" class="input" type="date" value="2026-07-27"></div>
+        <div class="field" style="width:150px"><label for="h-ate">Até</label><input id="h-ate" class="input" type="date" value="2026-08-10"></div>
+        <div class="field" style="width:170px"><label for="h-nat">Natureza</label>
+          <select id="h-nat" class="input"><option>Todas</option><option>Acidente rodoviário</option><option>Salvamento</option><option>Emergência médica</option></select>
+        </div>
+        <button type="button" class="btn btn-primary" style="height:36px">Pesquisar</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;padding-top:24px">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+            <h6 style="margin:0">Resultados</h6>
+            <span style="font-size:11.5px;opacity:.55">{{ histCount }}</span>
+          </div>
+          <table class="table">
+            <thead><tr><th>Dia</th><th>Hora</th><th>Natureza</th><th>Local</th><th>Nível</th><th>Duração</th><th>Estado</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ hist }}" as="h" hint-placeholder-count="12">
+                <tr>
+                  <td style="font-family:var(--font-heading);font-weight:800;font-size:12px;white-space:nowrap;opacity:{{ h.dayOpacity }}">{{ h.dayLabel }}</td>
+                  <td style="font-variant-numeric:tabular-nums;font-size:13px;opacity:.7">{{ h.hora }}</td>
+                  <td style="font-size:13px"><span style="font-family:var(--font-heading);font-weight:800">{{ h.tipo }}</span> <span style="opacity:.6">{{ h.subtipo }}</span></td>
+                  <td style="font-size:13px;opacity:.8">{{ h.localFull }}</td>
+                  <td><span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px"><span style="width:10px;height:10px;display:block;background:{{ h.color }}"></span>{{ h.nivLabel }}</span></td>
+                  <td style="font-variant-numeric:tabular-nums;font-size:13px">{{ h.duracao }}</td>
+                  <td><span class="tag tag-neutral" style="white-space:nowrap">Encerrada</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div style="display:flex;align-items:center;gap:12px;padding-top:14px">
+            <span style="font-size:11.5px;opacity:.55">{{ histFooter }}</span>
+            <button type="button" class="btn btn-secondary" style="margin-left:auto;font-size:12px">Página seguinte →</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:26px">
+          <div style="border-top:2px solid var(--color-text);padding-top:14px">
+            <h6 style="margin:0 0 12px">Últimos 14 dias</h6>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:120px">
+              <sc-for list="{{ histBars }}" as="b" hint-placeholder-count="14">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px">
+                  <div style="height:{{ b.h }};background:{{ b.fill }}"></div>
+                  <span style="font-size:9px;text-align:center;opacity:.45;font-variant-numeric:tabular-nums">{{ b.dia }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <p style="font-size:11.5px;opacity:.55;margin:10px 0 0">Total de ocorrências por dia. A barra vermelha marca o dia com mais avisos de nível vermelho.</p>
+          </div>
+          <div>
+            <h6 style="margin:0 0 10px;opacity:.6">No período selecionado</h6>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--color-divider)">
+              <sc-for list="{{ histStats }}" as="s" hint-placeholder-count="4">
+                <div style="background:var(--color-bg);padding:12px">
+                  <div style="font-family:var(--font-heading);font-weight:800;font-size:22px;line-height:1.1">{{ s.v }}</div>
+                  <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ s.k }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDistritos }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;min-height:0;min-width:1150px">
+    <div style="padding:24px 28px 56px">
+      <h3 style="margin:0 0 4px">Distritos</h3>
+      <p style="margin:0 0 20px;font-size:12.5px;opacity:.6">Atividade por distrito nas últimas 24 horas. Escolha um distrito para ver o detalhe.</p>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:36px">
+        <table class="table">
+          <thead><tr><th>Distrito</th><th style="text-align:right">Ativas</th><th style="text-align:right">Vermelho</th><th style="text-align:right">Laranja</th><th style="text-align:right">Amarelo</th><th style="width:160px">Peso relativo</th><th style="text-align:right">Meios</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ distStats }}" as="d" hint-placeholder-count="9">
+              <tr onClick="{{ d.onPick }}" style="cursor:pointer;background:{{ d.rowBg }}">
+                <td style="font-family:var(--font-heading);font-weight:800;font-size:13.5px">{{ d.nome }}</td>
+                <td style="text-align:right;font-variant-numeric:tabular-nums">{{ d.ativas }}</td>
+                <td style="text-align:right;font-variant-numeric:tabular-nums;color:#EC3013">{{ d.vermelho }}</td>
+                <td style="text-align:right;font-variant-numeric:tabular-nums;color:#F07300">{{ d.laranja }}</td>
+                <td style="text-align:right;font-variant-numeric:tabular-nums;opacity:.7">{{ d.amarelo }}</td>
+                <td><span style="display:block;height:8px;background:var(--color-text);width:{{ d.bar }}"></span></td>
+                <td style="text-align:right;font-variant-numeric:tabular-nums">{{ d.meios }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div style="border-top:2px solid var(--color-text);padding-top:12px">
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+              <h4 style="margin:0">{{ focus.nome }}</h4>
+              <span style="font-size:11.5px;opacity:.55;margin-left:auto">{{ focus.sub }}</span>
+            </div>
+            <div style="height:300px;border:1px solid var(--color-divider);background:var(--color-surface);position:relative">
+              <x-import component-from-global-scope="pt-map" from="./portugal-map.js" markers="{{ focus.markersJson }}" district="{{ focus.nome }}" style="position:absolute;inset:0" hint-size="100%,100%"></x-import>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--color-divider)">
+            <sc-for list="{{ focus.stats }}" as="s" hint-placeholder-count="4">
+              <div style="background:var(--color-bg);padding:12px">
+                <div style="font-family:var(--font-heading);font-weight:800;font-size:22px;line-height:1.1">{{ s.v }}</div>
+                <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ s.k }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div>
+            <h6 style="margin:0 0 10px;opacity:.6">Concelhos mais afetados</h6>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ focus.concelhos }}" as="c" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:12.5px">
+                  <span>{{ c.nome }}</span>
+                  <span style="display:block;height:8px;background:{{ c.fill }};width:{{ c.bar }}"></span>
+                  <span style="text-align:right;font-variant-numeric:tabular-nums;opacity:.6">{{ c.n }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDetalhe }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;min-height:0;min-width:1000px">
+    <div style="max-width:1320px;margin:0 auto;padding:0 24px 56px">
+
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--color-divider)">
+        <button type="button" class="btn btn-secondary" onClick="{{ backToRadar }}" style="font-size:12.5px">← Voltar ao mapa</button>
+        <span style="font-size:11.5px;opacity:.55">Radar 112 · Ocorrências · {{ det.id }}</span>
+        <button type="button" class="btn btn-primary" style="margin-left:auto;font-size:12.5px">Seguir esta ocorrência</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;padding:28px 0 22px;border-bottom:2px solid var(--color-divider)">
+        <div>
+          <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent);font-family:var(--font-heading);font-weight:800;margin-bottom:10px">{{ det.id }} · {{ det.categoria }}</div>
+          <h1 style="margin:0 0 12px;font-size:46px">{{ det.titulo }}</h1>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="tag" style="background:#EC3013;color:var(--color-bg);font-family:var(--font-heading);font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Nível vermelho</span>
+            <span class="tag tag-neutral" style="white-space:nowrap">{{ det.estado }}</span>
+            <span class="tag tag-outline" style="white-space:nowrap">Via cortada</span>
+            <span class="tag tag-neutral" style="white-space:nowrap">{{ det.distrito }}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;border-left:2px solid var(--color-divider);padding-left:20px">
+          <sc-for list="{{ det.meta }}" as="m" hint-placeholder-count="6">
+            <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--color-divider);font-size:12.5px">
+              <span style="opacity:.55;letter-spacing:.04em;text-transform:uppercase;font-size:10.5px;padding-top:2px">{{ m.k }}</span>
+              <span style="font-family:var(--font-heading);font-weight:800;text-align:right">{{ m.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:22px 0;border-bottom:1px solid var(--color-divider)">
+        <h6 style="margin:0 0 12px;opacity:.6">Estado da ocorrência</h6>
+        <div style="display:flex;align-items:stretch;gap:0">
+          <sc-for list="{{ det.estados }}" as="e" hint-placeholder-count="6">
+            <div style="flex:1;padding:10px 12px;border-left:2px solid {{ e.line }};background:{{ e.bg }};color:{{ e.fg }}">
+              <div style="font-family:var(--font-heading);font-weight:800;font-size:12.5px">{{ e.label }}</div>
+              <div style="font-size:11px;opacity:.7;font-variant-numeric:tabular-nums">{{ e.hora }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;padding-top:28px">
+
+        <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
+          <div>
+            <h6 style="margin:0 0 12px">Localização</h6>
+            <div style="height:360px;border:1px solid var(--color-divider);background:var(--color-surface);position:relative">
+              <x-import component-from-global-scope="pt-map" from="./portugal-map.js" markers="{{ det.markersJson }}" selected="{{ det.id }}" district="{{ det.distrito }}" style="position:absolute;inset:0" hint-size="100%,100%"></x-import>
+              <div style="position:absolute;right:14px;top:14px;background:var(--color-bg);border:1px solid var(--color-text);padding:8px 12px;font-size:11px;font-variant-numeric:tabular-nums;line-height:1.5">
+                <div style="font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:10px;margin-bottom:2px">Coordenadas</div>
+                {{ det.coords }}
+              </div>
+            </div>
+            <p style="font-size:12px;opacity:.55;margin:8px 0 0">Posição aproximada ao nível do quilómetro. A localização exata não é divulgada publicamente.</p>
+          </div>
+
+          <div>
+            <h6 style="margin:0 0 14px">Cronologia</h6>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ det.cronologia }}" as="c" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--color-divider)">
+                  <span style="font-family:var(--font-heading);font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:{{ c.horaColor }}">{{ c.hora }}</span>
+                  <div>
+                    <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:3px">{{ c.titulo }}</div>
+                    <div style="font-size:13px;opacity:.75;max-width:62ch;text-wrap:pretty">{{ c.texto }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+              <h6 style="margin:0">Meios no local</h6>
+              <span style="font-size:11.5px;opacity:.55">{{ det.meiosResumo }}</span>
+            </div>
+            <table class="table">
+              <thead><tr><th>Entidade</th><th>Meios</th><th style="text-align:right">Operacionais</th><th>Chegada</th><th>Estado</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ det.meios }}" as="m" hint-placeholder-count="6">
+                  <tr>
+                    <td style="font-family:var(--font-heading);font-weight:800;font-size:13px">{{ m.entidade }}</td>
+                    <td style="font-size:13px;opacity:.8">{{ m.meios }}</td>
+                    <td style="text-align:right;font-variant-numeric:tabular-nums">{{ m.operacionais }}</td>
+                    <td style="font-variant-numeric:tabular-nums;font-size:13px">{{ m.chegada }}</td>
+                    <td><span class="tag" style="background:{{ m.tagBg }};color:{{ m.tagFg }};white-space:nowrap">{{ m.estado }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:28px">
+          <div style="border-top:2px solid var(--color-text);padding-top:14px">
+            <h6 style="margin:0 0 8px">Ponto de situação</h6>
+            <p style="font-size:13px;line-height:1.6;opacity:.85;text-wrap:pretty">{{ det.resumo }}</p>
+            <div style="font-size:11px;opacity:.5">Atualizado {{ det.resumoHora }} · CDOS Leiria</div>
+          </div>
+
+          <div style="background:var(--color-accent);color:var(--color-bg);padding:14px 16px">
+            <div style="font-family:var(--font-heading);font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Se vai circular na zona</div>
+            <p style="margin:0;font-size:13px;line-height:1.5">{{ det.publico }}</p>
+          </div>
+
+          <div>
+            <h6 style="margin:0 0 10px;opacity:.6">Condições no local</h6>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--color-divider)">
+              <sc-for list="{{ det.meteo }}" as="w" hint-placeholder-count="4">
+                <div style="background:var(--color-bg);padding:10px 12px">
+                  <div style="font-family:var(--font-heading);font-weight:800;font-size:20px;line-height:1.1">{{ w.v }}</div>
+                  <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ w.k }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ showNewsPanel }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+              <h6 style="margin:0;opacity:.6">Na imprensa</h6>
+              <span style="font-size:10.5px;opacity:.45;margin-left:auto">Agregado automático</span>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ det.noticias }}" as="n" hint-placeholder-count="4">
+                <a href="#" style="display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid var(--color-divider);text-decoration:none;color:var(--color-text)">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ n.fonte }} · {{ n.hora }}</span>
+                  <span style="font-family:var(--font-heading);font-weight:800;font-size:14px;line-height:1.25;text-wrap:pretty">{{ n.titulo }}</span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;min-height:0">
+    <div style="padding:24px 28px 56px">
+      <h3 style="margin:0 0 4px">Mobile</h3>
+      <p style="margin:0 0 24px;font-size:12.5px;opacity:.6">A mesma informação em ecrã pequeno: mapa com folha deslizante e detalhe da ocorrência.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dc-props="{{ phone }}" hint-size="390px,844px">
+            <div style="height:100%;display:flex;flex-direction:column;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text)">
+              <div style="flex:none;padding:58px 16px 10px;display:flex;align-items:center;gap:9px;border-bottom:2px solid var(--color-divider)">
+                <span style="width:12px;height:12px;background:var(--color-accent);display:block"></span>
+                <span style="font-family:var(--font-heading);font-weight:800;font-size:16px">RADAR 112</span>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase">
+                  <span style="width:7px;height:7px;background:var(--color-accent);display:block;animation:rdrBlink 1.6s steps(1,end) infinite"></span>Em direto
+                </span>
+              </div>
+              <div style="flex:none;display:flex;border-bottom:1px solid var(--color-divider)">
+                <sc-for list="{{ mobileStats }}" as="s" hint-placeholder-count="3">
+                  <div style="flex:1;padding:8px 12px;border-right:1px solid var(--color-divider)">
+                    <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;line-height:1;color:{{ s.color }}">{{ s.value }}</div>
+                    <div style="font-size:9px;letter-spacing:.07em;text-transform:uppercase;opacity:.55">{{ s.label }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:none;height:250px;position:relative;background:var(--color-surface)">
+                <x-import component-from-global-scope="pt-map" from="./portugal-map.js" markers="{{ markersJson }}" labels="false" style="position:absolute;inset:0" hint-size="100%,100%"></x-import>
+              </div>
+              <div style="flex:1;overflow:hidden;border-top:2px solid var(--color-text);background:var(--color-bg)">
+                <div style="padding:10px 16px 6px;display:flex;align-items:center;gap:8px">
+                  <span style="width:36px;height:4px;background:var(--color-divider);display:block;margin:0 auto"></span>
+                </div>
+                <div style="padding:0 16px 8px;display:flex;align-items:baseline;gap:8px">
+                  <h6 style="margin:0">Perto de mim</h6>
+                  <span style="font-size:10.5px;opacity:.5;margin-left:auto">{{ feedStamp }}</span>
+                </div>
+                <sc-for list="{{ mobileFeed }}" as="o" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:5px minmax(0,1fr) auto;gap:10px;padding:10px 16px;border-top:1px solid var(--color-divider)">
+                    <span style="display:block;background:{{ o.color }}"></span>
+                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                      <span style="font-family:var(--font-heading);font-weight:800;font-size:13.5px">{{ o.tipo }}</span>
+                      <span style="font-size:11.5px;opacity:.65">{{ o.localFull }}</span>
+                      <span style="font-size:10.5px;opacity:.5">{{ o.meta }}</span>
+                    </span>
+                    <span style="font-size:11px;font-variant-numeric:tabular-nums;opacity:.6">{{ o.hora }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:none;display:flex;border-top:2px solid var(--color-divider);padding-bottom:22px">
+                <sc-for list="{{ mobileTabs }}" as="t" hint-placeholder-count="4">
+                  <div style="flex:1;padding:10px 0 6px;text-align:center;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-heading);font-weight:800;color:{{ t.fg }}">{{ t.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </x-import>
+          <span style="font-size:11.5px;opacity:.55">Mapa · folha com as ocorrências mais próximas</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dc-props="{{ phone }}" hint-size="390px,844px">
+            <div style="height:100%;display:flex;flex-direction:column;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text);overflow:hidden">
+              <div style="flex:none;padding:58px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--color-divider)">
+                <span style="font-size:18px">←</span>
+                <span style="font-size:11px;letter-spacing:.06em;opacity:.6">{{ det.id }}</span>
+              </div>
+              <div style="flex:none;background:#EC3013;color:var(--color-bg);padding:12px 16px">
+                <div style="font-family:var(--font-heading);font-weight:800;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase">Nível vermelho · {{ det.estado }}</div>
+              </div>
+              <div style="flex:1;overflow:auto">
+                <div style="padding:16px">
+                  <h4 style="margin:0 0 8px;font-size:23px">{{ det.titulo }}</h4>
+                  <div style="font-size:12.5px;opacity:.7">{{ det.localMobile }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--color-divider);margin:0 16px">
+                  <sc-for list="{{ det.mobileStats }}" as="s" hint-placeholder-count="3">
+                    <div style="background:var(--color-bg);padding:10px">
+                      <div style="font-family:var(--font-heading);font-weight:800;font-size:18px;line-height:1">{{ s.v }}</div>
+                      <div style="font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;opacity:.55">{{ s.k }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="height:170px;margin:16px;border:1px solid var(--color-divider);position:relative;background:var(--color-surface)">
+                  <x-import component-from-global-scope="pt-map" from="./portugal-map.js" markers="{{ det.markersJson }}" selected="{{ det.id }}" district="{{ det.distrito }}" labels="false" style="position:absolute;inset:0" hint-size="100%,100%"></x-import>
+                </div>
+                <div style="padding:0 16px 16px">
+                  <h6 style="margin:0 0 8px;opacity:.6">Cronologia</h6>
+                  <sc-for list="{{ det.cronologia }}" as="c" hint-placeholder-count="4">
+                    <div style="display:grid;grid-template-columns:44px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--color-divider)">
+                      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;font-variant-numeric:tabular-nums;color:{{ c.horaColor }}">{{ c.hora }}</span>
+                      <span style="font-size:12.5px;line-height:1.4">{{ c.titulo }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="flex:none;padding:12px 16px 30px;border-top:2px solid var(--color-text)">
+                <button type="button" class="btn btn-primary btn-block" style="margin:0">Seguir esta ocorrência</button>
+              </div>
+            </div>
+          </x-import>
+          <span style="font-size:11.5px;opacity:.55">Detalhe · estado, meios e cronologia</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Mapa&quot;,&quot;Ocorrências&quot;,&quot;Histórico&quot;,&quot;Distritos&quot;,&quot;Detalhe&quot;,&quot;Mobile&quot;],&quot;default&quot;:&quot;Mapa&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;liveFeed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showNews&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const NIV = {
+  vermelho: { label: 'Vermelho', dot: '#EC3013', tagBg: '#EC3013', tagFg: '#f3f2f2' },
+  laranja: { label: 'Laranja', dot: '#F07300', tagBg: '#FFE4CC', tagFg: '#7A3600' },
+  amarelo: { label: 'Amarelo', dot: '#E8A800', tagBg: '#FAF0CE', tagFg: '#5F4700' }
+};
+const ESTADO_TAG = {
+  'Despacho': ['#eae7e7', '#444141'], 'Em Curso': ['#FFE4CC', '#7A3600'],
+  'Chegada ao TO': ['#FFE4CC', '#7A3600'], 'Em Resolução': ['#FAF0CE', '#5F4700'],
+  'Em Conclusão': ['#eae7e7', '#444141'], 'Vigilância': ['#eae7e7', '#444141'],
+  'Encerrada': ['#f8f4f4', '#605d5d']
+};
+const CADEIA = ['Despacho', 'Em Curso', 'Chegada ao TO', 'Em Resolução', 'Em Conclusão', 'Encerrada'];
+
+const OCS = [
+  { id: 'RD-2026-08417', hora: '14:02', tipo: 'Acidente rodoviário', subtipo: 'Colisão múltipla, 6 viaturas', concelho: 'Pombal', freguesia: 'A1 · km 213', distrito: 'Leiria', niv: 'vermelho', estado: 'Em Resolução', meios: 11, operacionais: 42, lat: 39.9153, lon: -8.6285, dur: '3h 36m' },
+  { id: 'RD-2026-08402', hora: '15:11', tipo: 'Emergência médica', subtipo: 'Multivítimas em recinto', concelho: 'Loulé', freguesia: 'Quarteira', distrito: 'Faro', niv: 'laranja', estado: 'Em Curso', meios: 4, operacionais: 14, lat: 37.137, lon: -8.023, dur: '2h 27m' },
+  { id: 'RD-2026-08396', hora: '15:38', tipo: 'Salvamento', subtipo: 'Desencarceramento', concelho: 'Porto', freguesia: 'Campanhã', distrito: 'Porto', niv: 'laranja', estado: 'Chegada ao TO', meios: 3, operacionais: 12, lat: 41.152, lon: -8.585, dur: '2h 00m' },
+  { id: 'RD-2026-08388', hora: '16:04', tipo: 'Acidente rodoviário', subtipo: 'Capotamento', concelho: 'Sines', freguesia: 'EN 120', distrito: 'Setúbal', niv: 'amarelo', estado: 'Em Resolução', meios: 2, operacionais: 8, lat: 37.956, lon: -8.869, dur: '1h 34m' },
+  { id: 'RD-2026-08375', hora: '16:22', tipo: 'Salvamento', subtipo: 'Busca de pessoa desaparecida', concelho: 'Monchique', freguesia: 'Alferce', distrito: 'Faro', niv: 'laranja', estado: 'Em Curso', meios: 6, operacionais: 24, lat: 37.3167, lon: -8.5556, dur: '1h 16m' },
+  { id: 'RD-2026-08362', hora: '16:47', tipo: 'Salvamento', subtipo: 'Resgate em montanha', concelho: 'Manteigas', freguesia: 'Sameiro', distrito: 'Guarda', niv: 'amarelo', estado: 'Em Curso', meios: 3, operacionais: 14, lat: 40.4032, lon: -7.5383, dur: '51m' },
+  { id: 'RD-2026-08350', hora: '17:02', tipo: 'Emergência médica', subtipo: 'Paragem cardiorrespiratória', concelho: 'Águeda', freguesia: 'Recardães', distrito: 'Aveiro', niv: 'vermelho', estado: 'Em Conclusão', meios: 2, operacionais: 6, lat: 40.5749, lon: -8.4455, dur: '36m' },
+  { id: 'RD-2026-08341', hora: '17:14', tipo: 'Acidente rodoviário', subtipo: 'Atropelamento', concelho: 'Mação', freguesia: 'EN 244', distrito: 'Santarém', niv: 'laranja', estado: 'Em Curso', meios: 2, operacionais: 7, lat: 39.5527, lon: -7.993, dur: '24m' },
+  { id: 'RD-2026-08337', hora: '17:21', tipo: 'Acidente rodoviário', subtipo: 'Colisão sem vítimas', concelho: 'Murça', freguesia: 'IP4 · km 71', distrito: 'Vila Real', niv: 'amarelo', estado: 'Vigilância', meios: 2, operacionais: 6, lat: 41.4, lon: -7.453, dur: '17m' },
+  { id: 'RD-2026-08329', hora: '17:26', tipo: 'Emergência médica', subtipo: 'Intoxicação', concelho: 'Coimbra', freguesia: 'Sto. António dos Olivais', distrito: 'Coimbra', niv: 'amarelo', estado: 'Em Curso', meios: 1, operacionais: 4, lat: 40.2033, lon: -8.4103, dur: '12m' },
+  { id: 'RD-2026-08318', hora: '12:40', tipo: 'Acidente rodoviário', subtipo: 'Colisão com ligeiro', concelho: 'Baião', freguesia: 'Ancede', distrito: 'Porto', niv: 'amarelo', estado: 'Encerrada', meios: 0, operacionais: 0, lat: 41.162, lon: -8.035, dur: '1h 05m' },
+  { id: 'RD-2026-08305', hora: '11:18', tipo: 'Salvamento', subtipo: 'Resgate em água', concelho: 'Setúbal', freguesia: 'Azeitão', distrito: 'Setúbal', niv: 'amarelo', estado: 'Encerrada', meios: 0, operacionais: 0, lat: 38.5244, lon: -8.8882, dur: '2h 10m' }
+];
+
+const QUEUE = [
+  { id: 'RD-2026-08431', hora: '17:38', tipo: 'Acidente rodoviário', subtipo: 'Colisão em cadeia', concelho: 'Vila Nova de Gaia', freguesia: 'A1 · km 293', distrito: 'Porto', niv: 'laranja', estado: 'Despacho', meios: 5, operacionais: 18, lat: 41.1239, lon: -8.6118, dur: '3m' },
+  { id: 'RD-2026-08436', hora: '17:41', tipo: 'Emergência médica', subtipo: 'Queda em altura', concelho: 'Oliveira do Hospital', freguesia: 'Avô', distrito: 'Coimbra', niv: 'amarelo', estado: 'Despacho', meios: 2, operacionais: 6, lat: 40.2669, lon: -7.9006, dur: '1m' }
+];
+
+const HIST_SRC = [
+  ['Hoje · 10 ago', [
+    ['09:12', 'Acidente rodoviário', 'Colisão traseira', 'Leiria · A8 km 74', 'amarelo', '48m'],
+    ['08:40', 'Emergência médica', 'Queda em casa', 'Coimbra · Cernache', 'amarelo', '32m'],
+    ['07:05', 'Salvamento', 'Desencarceramento', 'Pombal · EN 348', 'laranja', '1h 14m']
+  ]],
+  ['Ontem · 9 ago', [
+    ['22:31', 'Acidente rodoviário', 'Colisão com pesado', 'Santarém · A1 km 92', 'vermelho', '4h 02m'],
+    ['19:18', 'Emergência médica', 'Afogamento', 'Faro · Praia da Rocha', 'vermelho', '1h 22m'],
+    ['16:44', 'Salvamento', 'Busca em ribeira', 'Aveiro · Águeda', 'laranja', '2h 55m'],
+    ['11:02', 'Acidente rodoviário', 'Atropelamento', 'Porto · Bonfim', 'laranja', '1h 08m']
+  ]],
+  ['Sáb · 8 ago', [
+    ['20:15', 'Acidente rodoviário', 'Saída de via', 'Vila Real · IP4 km 63', 'amarelo', '55m'],
+    ['15:50', 'Salvamento', 'Resgate em falésia', 'Faro · Lagoa', 'laranja', '3h 10m'],
+    ['13:27', 'Emergência médica', 'Multivítimas', 'Setúbal · Almada', 'vermelho', '2h 41m'],
+    ['09:34', 'Acidente rodoviário', 'Colisão ligeiros', 'Guarda · EN 232', 'amarelo', '41m'],
+    ['08:11', 'Salvamento', 'Desencarceramento', 'Leiria · Marinha Grande', 'laranja', '1h 30m']
+  ]]
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: null, selectedId: 'RD-2026-08417', distrito: null, focusDistrito: 'Leiria',
+    nivs: [], tipos: [], view: 'Ativas', ago: 4, queued: 0, newId: null
+  };
+  mapWrap = React.createRef();
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (this.props.liveFeed === false) return;
+      this.setState(s => {
+        const ago = s.ago + 1;
+        if (ago >= 14 && s.queued < QUEUE.length) return { ago: 0, queued: s.queued + 1, newId: QUEUE[s.queued].id };
+        return { ago: ago >= 22 ? 0 : ago };
+      });
+    }, 1000);
+    const el = this.mapWrap.current;
+    if (el) el.addEventListener('marker-click', e => this.setState({ selectedId: e.detail }));
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  all() { return QUEUE.slice(0, this.state.queued).concat(OCS); }
+  filtered() {
+    const { distrito, nivs, tipos, view } = this.state;
+    return this.all().filter(o =>
+      (!distrito || o.distrito === distrito) &&
+      (!nivs.length || nivs.includes(o.niv)) &&
+      (!tipos.length || tipos.includes(o.tipo)) &&
+      (view === 'Todas' || (view === 'Histórico' ? o.estado === 'Encerrada' : o.estado !== 'Encerrada'))
+    );
+  }
+  toggle(key, v) {
+    this.setState(s => ({ [key]: s[key].includes(v) ? s[key].filter(x => x !== v) : s[key].concat(v) }));
+  }
+  row(o) {
+    const n = NIV[o.niv];
+    const et = ESTADO_TAG[o.estado] || ESTADO_TAG['Despacho'];
+    return {
+      ...o, nivLabel: n.label, color: n.dot, tagBg: n.tagBg, tagFg: n.tagFg,
+      estadoBg: et[0], estadoFg: et[1], duracao: o.dur,
+      localFull: o.concelho + ' · ' + o.freguesia,
+      meta: o.estado === 'Encerrada' ? 'Duração ' + o.dur + ' · encerrada' : o.meios + ' meios · ' + o.operacionais + ' operacionais · há ' + o.dur,
+      rowBg: this.state.selectedId === o.id ? '#eae9e9' : 'transparent',
+      anim: this.state.newId === o.id ? 'rdrIn .5s ease-out' : 'none',
+      onPick: () => this.setState({ selectedId: o.id }),
+      onOpen: () => this.setState({ selectedId: o.id, screen: 'detalhe' })
+    };
+  }
+  marker(o) { return { id: o.id, lat: o.lat, lon: o.lon, crit: o.niv, live: o.estado !== 'Encerrada', local: o.concelho }; }
+
+  renderVals() {
+    const map = { 'Mapa': 'mapa', 'Ocorrências': 'lista', 'Histórico': 'historico', 'Distritos': 'distritos', 'Detalhe': 'detalhe', 'Mobile': 'mobile' };
+    const screen = this.state.screen || map[this.props.screen] || 'mapa';
+    const all = this.all();
+    const shown = this.filtered();
+    const active = all.filter(o => o.estado !== 'Encerrada');
+    const sel = all.find(o => o.id === this.state.selectedId);
+    const base = OCS[0];
+    const pill = on => ({ bg: on ? '#201e1d' : 'transparent', fg: on ? '#f3f2f2' : '#201e1d' });
+    const distritos = [...new Set(all.map(o => o.distrito))].sort((a, b) => a.localeCompare(b, 'pt'));
+
+    const tabs = ['Mapa', 'Ocorrências', 'Histórico', 'Distritos', 'Mobile'].map(label => {
+      const on = map[label] === screen || (label === 'Mapa' && screen === 'detalhe');
+      return {
+        label, onPick: () => this.setState({ screen: map[label] }),
+        fg: on ? 'var(--color-accent)' : 'var(--color-text)', weight: on ? 800 : 400,
+        line: on ? 'var(--color-accent)' : 'transparent'
+      };
+    });
+
+    const hist = [];
+    HIST_SRC.forEach(([dia, rows]) => rows.forEach(([hora, tipo, subtipo, localFull, niv, duracao], i) => {
+      hist.push({
+        dayLabel: i === 0 ? dia : '', dayOpacity: i === 0 ? '1' : '0',
+        hora, tipo, subtipo, localFull, duracao,
+        nivLabel: NIV[niv].label, color: NIV[niv].dot
+      });
+    }));
+    const barVals = [38, 42, 51, 33, 47, 62, 58, 44, 39, 71, 55, 48, 52, 46];
+    const maxBar = Math.max(...barVals);
+    const peak = barVals.indexOf(maxBar);
+
+    const distStats = distritos.map(nome => {
+      const rows = all.filter(o => o.distrito === nome);
+      const act = rows.filter(o => o.estado !== 'Encerrada');
+      return {
+        nome, ativas: act.length,
+        vermelho: rows.filter(o => o.niv === 'vermelho').length,
+        laranja: rows.filter(o => o.niv === 'laranja').length,
+        amarelo: rows.filter(o => o.niv === 'amarelo').length,
+        meios: act.reduce((n, o) => n + o.meios, 0),
+        bar: Math.round((act.length / 3) * 100) + '%',
+        rowBg: this.state.focusDistrito === nome ? '#eae9e9' : 'transparent',
+        onPick: () => this.setState({ focusDistrito: nome })
+      };
+    }).sort((a, b) => b.ativas - a.ativas);
+
+    const fd = this.state.focusDistrito;
+    const fdRows = all.filter(o => o.distrito === fd);
+    const concelhos = [...new Set(fdRows.map(o => o.concelho))];
+
+    return {
+      isMapa: screen === 'mapa', isLista: screen === 'lista', isHistorico: screen === 'historico',
+      isDistritos: screen === 'distritos', isDetalhe: screen === 'detalhe', isMobile: screen === 'mobile',
+      showNewsPanel: this.props.showNews !== false,
+      tabs,
+      phone: { width: 390, height: 844 },
+      agoLabel: 'há ' + this.state.ago + ' s',
+      feedStamp: 'atualizado há ' + this.state.ago + ' s',
+      feedFooter: shown.length + ' de ' + all.length + ' ocorrências nas últimas 12 h',
+      listaFooter: 'A mostrar ' + all.length + ' de 3 482 ocorrências registadas este mês',
+
+      stats: [
+        { value: active.length, label: 'Ocorrências ativas', color: 'var(--color-accent)' },
+        { value: active.filter(o => o.niv === 'vermelho').length, label: 'Nível vermelho', color: '#EC3013' },
+        { value: active.reduce((n, o) => n + o.meios, 0), label: 'Meios no terreno', color: 'var(--color-text)' },
+        { value: active.reduce((n, o) => n + o.operacionais, 0), label: 'Operacionais', color: 'var(--color-text)' },
+        { value: new Set(active.map(o => o.distrito)).size, label: 'Distritos com ocorrências', color: 'var(--color-text)' }
+      ],
+      mobileStats: [
+        { value: active.length, label: 'Ativas', color: 'var(--color-accent)' },
+        { value: active.filter(o => o.niv === 'vermelho').length, label: 'Vermelho', color: '#EC3013' },
+        { value: active.reduce((n, o) => n + o.meios, 0), label: 'Meios', color: 'var(--color-text)' }
+      ],
+      mobileTabs: [
+        { label: 'Mapa', fg: 'var(--color-accent)' }, { label: 'Lista', fg: 'rgba(32,30,29,.45)' },
+        { label: 'Alertas', fg: 'rgba(32,30,29,.45)' }, { label: 'Eu', fg: 'rgba(32,30,29,.45)' }
+      ],
+
+      nivs: ['vermelho', 'laranja', 'amarelo'].map(k => {
+        const on = this.state.nivs.includes(k);
+        return { label: NIV[k].label, dot: NIV[k].dot, n: all.filter(o => o.niv === k).length, ...pill(on), onToggle: () => this.toggle('nivs', k) };
+      }),
+      districts: distritos.map(d => {
+        const on = this.state.distrito === d;
+        return { nome: d, n: all.filter(o => o.distrito === d).length, ...pill(on), onPick: () => this.setState({ distrito: on ? null : d }) };
+      }),
+      tipos: ['Acidente rodoviário', 'Salvamento', 'Emergência médica'].map(t => {
+        const on = this.state.tipos.includes(t);
+        return { label: t, ...pill(on), onToggle: () => this.toggle('tipos', t) };
+      }),
+      views: ['Ativas', 'Todas', 'Histórico'].map(v => {
+        const on = this.state.view === v;
+        return { label: v, bg: on ? 'var(--color-accent)' : 'transparent', fg: on ? 'var(--color-bg)' : 'var(--color-text)', onPick: () => this.setState({ view: v }) };
+      }),
+      clearFilters: () => this.setState({ distrito: null, nivs: [], tipos: [] }),
+      goHistorico: () => this.setState({ screen: 'historico' }),
+
+      legend: ['vermelho', 'laranja', 'amarelo'].map(k => ({ label: NIV[k].label, dot: NIV[k].dot })),
+      mapScopeLabel: this.state.distrito ? 'Distrito de ' + this.state.distrito : 'Portugal continental',
+      mapCountLabel: shown.length + ' ocorrências no mapa · posição aproximada',
+      markersJson: JSON.stringify(shown.map(o => this.marker(o))),
+      districtAttr: this.state.distrito || '',
+      selectedId: this.state.selectedId || '',
+      mapWrap: this.mapWrap,
+
+      hasSelection: !!sel,
+      sel: sel ? this.row(sel) : {},
+      openDetail: () => this.setState({ screen: 'detalhe' }),
+      backToRadar: () => this.setState({ screen: 'mapa' }),
+
+      feed: shown.map(o => this.row(o)),
+      mobileFeed: shown.slice(0, 4).map(o => this.row(o)),
+      lista: all.map(o => this.row(o)),
+
+      hist, histCount: hist.length + ' ocorrências encerradas entre 8 e 10 de agosto',
+      histFooter: '1–12 de 3 482 resultados',
+      histBars: barVals.map((v, i) => ({
+        dia: 27 + i > 31 ? 27 + i - 31 : 27 + i,
+        h: Math.round((v / maxBar) * 100) + '%',
+        fill: i === peak ? '#EC3013' : 'rgba(32,30,29,.35)'
+      })),
+      histStats: [
+        { v: '3 482', k: 'Ocorrências' }, { v: '11m 42s', k: 'Tempo médio de resposta' },
+        { v: '41 %', k: 'Acidentes rodoviários' }, { v: '9', k: 'Avisos vermelhos' }
+      ],
+
+      distStats,
+      focus: {
+        nome: fd, sub: fdRows.length + ' ocorrências nas últimas 24 h',
+        markersJson: JSON.stringify(fdRows.map(o => this.marker(o))),
+        stats: [
+          { v: fdRows.filter(o => o.estado !== 'Encerrada').length, k: 'Ativas agora' },
+          { v: fdRows.reduce((n, o) => n + o.operacionais, 0), k: 'Operacionais' },
+          { v: '9m 51s', k: 'Tempo médio de resposta' },
+          { v: 'Acidente rodoviário', k: 'Natureza mais frequente' }
+        ],
+        concelhos: concelhos.map((c, i) => {
+          const n = fdRows.filter(o => o.concelho === c).length;
+          return { nome: c, n, bar: Math.round((n / Math.max(1, fdRows.length)) * 100) + '%', fill: i === 0 ? '#EC3013' : 'rgba(32,30,29,.35)' };
+        })
+      },
+
+      det: {
+        id: base.id, categoria: 'Acidente rodoviário · A1 sentido sul',
+        titulo: 'Colisão múltipla na A1, ao km 213',
+        estado: 'Em Resolução', distrito: 'Leiria',
+        localMobile: 'Pombal · A1 km 213 · distrito de Leiria',
+        coords: '39.9153 N · 8.6285 W',
+        meta: [
+          { k: 'Distrito', v: 'Leiria' }, { k: 'Concelho', v: 'Pombal' },
+          { k: 'Local', v: 'A1 · km 213' }, { k: 'Alerta', v: '14:02' },
+          { k: 'Desde o alerta', v: base.dur }, { k: 'Viaturas envolvidas', v: '6' }
+        ],
+        estados: CADEIA.map(label => {
+          const done = CADEIA.indexOf(label) <= CADEIA.indexOf('Em Resolução');
+          const now = label === 'Em Resolução';
+          return {
+            label, hora: { 'Despacho': '14:02', 'Em Curso': '14:06', 'Chegada ao TO': '14:09', 'Em Resolução': '16:05', 'Em Conclusão': '—', 'Encerrada': '—' }[label],
+            bg: now ? '#EC3013' : done ? 'var(--color-surface)' : 'transparent',
+            fg: now ? '#f3f2f2' : 'var(--color-text)',
+            line: now ? '#EC3013' : done ? 'var(--color-text)' : 'var(--color-divider)'
+          };
+        }),
+        markersJson: JSON.stringify([this.marker(base)]),
+        mobileStats: [{ v: base.meios, k: 'Meios' }, { v: base.operacionais, k: 'Operacionais' }, { v: '3', k: 'Feridos graves' }],
+        resumo: 'Colisão em cadeia entre seis viaturas com chuva forte. Três desencarceramentos concluídos. Uma via já reaberta ao trânsito; a via da esquerda mantém-se cortada para remoção das viaturas.',
+        resumoHora: 'às 17:38',
+        publico: 'A1 com uma via cortada no sentido Norte–Sul entre Pombal e Condeixa. Desvio aconselhado pela EN 1. Fila de cerca de 4 km.',
+        meiosResumo: '11 meios · 42 operacionais · 3 ambulâncias',
+        meios: [
+          { entidade: 'BV Pombal', meios: '2 VDCI · 1 ABSC', operacionais: 12, chegada: '14:09', estado: 'No local' },
+          { entidade: 'BV Louriçal', meios: '1 VSAT · 1 ABSC', operacionais: 8, chegada: '14:21', estado: 'No local' },
+          { entidade: 'INEM', meios: '1 VMER · 2 SIV', operacionais: 9, chegada: '14:18', estado: 'No local' },
+          { entidade: 'GNR · Brigada de Trânsito', meios: '3 viaturas', operacionais: 7, chegada: '14:14', estado: 'No local' },
+          { entidade: 'Concessionária', meios: '2 viaturas de assistência', operacionais: 4, chegada: '14:26', estado: 'No local' },
+          { entidade: 'BM Coimbra', meios: '1 VE30', operacionais: 2, chegada: '18:10 (prev.)', estado: 'Em trânsito' }
+        ].map(m => ({ ...m, tagBg: m.estado === 'No local' ? '#eae7e7' : '#FFE4CC', tagFg: m.estado === 'No local' ? '#444141' : '#7A3600' })),
+        meteo: [
+          { k: 'Estado do tempo', v: 'Chuva forte' }, { k: 'Temperatura', v: '14 °C' },
+          { k: 'Vento', v: 'SO 44 km/h' }, { k: 'Visibilidade', v: '400 m' }
+        ],
+        cronologia: [
+          { hora: '14:02', titulo: 'Alerta recebido no 112', texto: 'Duas chamadas reportam colisão em cadeia no sentido Norte–Sul, com chuva forte à hora do acidente.', horaColor: 'var(--color-text)' },
+          { hora: '14:09', titulo: 'Primeiro meio no local', texto: 'Seis viaturas envolvidas, três pessoas encarceradas. Pedido reforço de meios de desencarceramento.', horaColor: 'var(--color-text)' },
+          { hora: '14:14', titulo: 'Autoestrada cortada', texto: 'GNR corta as duas vias no sentido sul e encaminha o trânsito para a saída de Pombal.', horaColor: 'var(--color-text)' },
+          { hora: '14:38', titulo: 'Desencarceramentos concluídos', texto: 'Três vítimas retiradas e entregues ao INEM; duas em estado grave.', horaColor: 'var(--color-text)' },
+          { hora: '15:20', titulo: 'Vítimas transportadas', texto: 'Transporte para o Hospital de Leiria e para o Centro Hospitalar de Coimbra.', horaColor: 'var(--color-text)' },
+          { hora: '16:05', titulo: 'Em resolução', texto: 'Uma via reaberta. Remoção das viaturas em curso; previsão de reabertura total às 18:30.', horaColor: 'var(--color-accent)' }
+        ],
+        noticias: [
+          { fonte: 'Lusa', hora: '17:20', titulo: 'Colisão em cadeia na A1 em Pombal faz três feridos graves' },
+          { fonte: 'Diário de Leiria', hora: '16:52', titulo: 'A1 com uma via cortada em Pombal; trânsito desviado pela EN 1' },
+          { fonte: 'Rádio Regional', hora: '15:58', titulo: 'IPMA mantém aviso vermelho para chuva forte no litoral centro' },
+          { fonte: 'Agregado de imprensa', hora: '15:10', titulo: 'GNR apela a redução de velocidade em toda a A1 devido a aquaplanagem' }
+        ]
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
