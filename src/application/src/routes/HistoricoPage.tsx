@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { FourteenDayBars } from '../components/charts/FourteenDayBars';
 import { NivSwatch } from '../components/common/NivTag';
 import { KpiGrid } from '../components/kpi/KpiGrid';
+import { MobileHistorico } from '../components/mobile/MobileHistorico';
 import { useHistorico } from '../hooks/useHistorico';
+import { useIsMobileViewport } from '../hooks/useMediaQuery';
 import { formatDiaLabel } from '../lib/format';
 import { NIVEL_LABEL } from '../lib/niveis';
 import './HistoricoPage.css';
@@ -10,6 +12,7 @@ import './HistoricoPage.css';
 const TIPOS_DISPONIVEIS = ['Acidente rodoviário', 'Salvamento', 'Emergência médica'];
 
 export function HistoricoPage() {
+  const isMobile = useIsMobileViewport();
   const [draft, setDraft] = useState({ q: '', de: '', ate: '', tipo: '' });
   const [applied, setApplied] = useState({ q: '', de: '', ate: '', tipo: '' });
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -33,6 +36,26 @@ export function HistoricoPage() {
     },
     { flags: [] },
   ).flags;
+
+  if (isMobile) {
+    return (
+      <MobileHistorico
+        items={items}
+        total={data?.total ?? 0}
+        isLoading={isLoading}
+        draft={draft}
+        onDraftChange={(patch) => setDraft((s) => ({ ...s, ...patch }))}
+        onSearch={() => {
+          setCursor(undefined);
+          setApplied(draft);
+        }}
+        hasMore={!!data?.nextCursor}
+        onLoadMore={() => setCursor(data?.nextCursor ?? undefined)}
+        ultimosCatorzeDias={data?.ultimosCatorzeDias ?? []}
+        kpis={data?.kpis}
+      />
+    );
+  }
 
   return (
     <div>

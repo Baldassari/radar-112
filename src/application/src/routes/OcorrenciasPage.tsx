@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NivSwatch } from '../components/common/NivTag';
+import { MobileOcorrencias } from '../components/mobile/MobileOcorrencias';
 import { useDistritos } from '../hooks/useDistritos';
+import { useIsMobileViewport } from '../hooks/useMediaQuery';
 import { useOcorrencias } from '../hooks/useOcorrencias';
 import { downloadCsv, ocorrenciasToCsv } from '../lib/exportCsv';
 import { NIVEL_LABEL } from '../lib/niveis';
 import './OcorrenciasPage.css';
 
 export function OcorrenciasPage() {
+  const isMobile = useIsMobileViewport();
   const [q, setQ] = useState('');
   const [distrito, setDistrito] = useState('');
   const [limit, setLimit] = useState(50);
@@ -17,6 +20,24 @@ export function OcorrenciasPage() {
   const { data, isLoading } = useOcorrencias({ view: 'Todas', q: q || undefined, distrito: distrito || undefined, limit });
 
   const items = data?.items ?? [];
+
+  if (isMobile) {
+    return (
+      <MobileOcorrencias
+        items={items}
+        total={data?.total ?? 0}
+        isLoading={isLoading}
+        distritos={distritos ?? []}
+        q={q}
+        onQChange={setQ}
+        distrito={distrito}
+        onDistritoChange={setDistrito}
+        onExportCsv={() => downloadCsv('radar112-ocorrencias.csv', ocorrenciasToCsv(items))}
+        hasMore={!!data?.nextCursor}
+        onLoadMore={() => setLimit((l) => l + 50)}
+      />
+    );
+  }
 
   return (
     <div className="rdr-page">

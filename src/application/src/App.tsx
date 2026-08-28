@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { NavBar } from './components/layout/NavBar';
+import { MobileTabBar } from './components/mobile/MobileTabBar';
 import { useIsMobileViewport } from './hooks/useMediaQuery';
 import { StreamProvider } from './hooks/useOcorrenciaStream';
 import { DetalhePage } from './routes/DetalhePage';
@@ -24,6 +25,7 @@ function Shell() {
           <Route path="/distritos" element={<DistritosPage />} />
         </Routes>
       </div>
+      {isMobile && <MobileTabBar />}
     </div>
   );
 }

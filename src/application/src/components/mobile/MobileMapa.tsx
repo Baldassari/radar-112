@@ -1,7 +1,7 @@
 import type { Kpis, OcorrenciaResumo } from '../../api/types';
 import { PtMap, type MapMarker } from '../map/PtMap';
 import './Mobile.css';
-import { MobileTabBar } from './MobileTabBar';
+import { MobileKpiRow } from './MobileKpiRow';
 import { PertoDeMimSheet } from './PertoDeMimSheet';
 
 export function MobileMapa({
@@ -36,29 +36,19 @@ export function MobileMapa({
         </div>
       </div>
 
-      <div className="rdr-mobile-kpis">
-        <div className="rdr-mobile-kpi">
-          <span className="rdr-mobile-kpi-value tabular-nums">{kpis?.ocorrenciasAtivas ?? 0}</span>
-          <span className="rdr-mobile-kpi-label">Ativas</span>
-        </div>
-        <div className="rdr-mobile-kpi">
-          <span className="rdr-mobile-kpi-value tabular-nums" style={{ color: 'var(--niv-vermelho)' }}>
-            {kpis?.nivelVermelho ?? 0}
-          </span>
-          <span className="rdr-mobile-kpi-label">Vermelho</span>
-        </div>
-        <div className="rdr-mobile-kpi">
-          <span className="rdr-mobile-kpi-value tabular-nums">{kpis?.meiosNoTerreno ?? 0}</span>
-          <span className="rdr-mobile-kpi-label">Meios</span>
-        </div>
-      </div>
+      <MobileKpiRow
+        items={[
+          { label: 'Ativas', value: kpis?.ocorrenciasAtivas ?? 0 },
+          { label: 'Vermelho', value: kpis?.nivelVermelho ?? 0, color: 'var(--niv-vermelho)' },
+          { label: 'Meios', value: kpis?.meiosNoTerreno ?? 0 },
+        ]}
+      />
 
       <div className="rdr-mobile-map">
         <PtMap markers={markers} selected={selectedId} labels={false} onMarkerClick={onSelect} />
       </div>
 
       <PertoDeMimSheet items={items} onSelect={onSelect} />
-      <MobileTabBar active="Mapa" />
     </div>
   );
 }
