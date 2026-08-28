@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { KpiGrid } from '../components/kpi/KpiGrid';
 import { PtMap } from '../components/map/PtMap';
+import { MobileDistritos } from '../components/mobile/MobileDistritos';
 import { useDistritos } from '../hooks/useDistritos';
+import { useIsMobileViewport } from '../hooks/useMediaQuery';
 import './DistritosPage.css';
 
 export function DistritosPage() {
+  const isMobile = useIsMobileViewport();
   const { data } = useDistritos();
   const distritos = data ?? [];
   const [focoNome, setFocoNome] = useState<string | null>(null);
   const foco = distritos.find((d) => d.distrito === focoNome) ?? distritos[0];
   const maxAtivas = Math.max(1, ...distritos.map((d) => d.ativas));
   const maxConcelho = Math.max(1, ...(foco?.concelhosMaisAfetados ?? []).map((c) => c.count));
+
+  if (isMobile) {
+    return <MobileDistritos distritos={distritos} foco={foco} onFocoChange={setFocoNome} />;
+  }
 
   return (
     <div className="rdr-page">

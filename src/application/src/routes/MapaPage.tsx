@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Nivel, View } from '../api/types';
 import { FilterPanel } from '../components/filters/FilterPanel';
 import { KpiStrip } from '../components/kpi/KpiStrip';
@@ -29,6 +29,7 @@ function parseFacets(params: URLSearchParams): Facets {
 
 export function MapaPage() {
   const isMobile = useIsMobileViewport();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const facets = parseFacets(params);
   const view = (params.get('view') as View) ?? 'Ativas';
@@ -78,7 +79,7 @@ export function MapaPage() {
   }));
 
   if (isMobile) {
-    return <MobileMapa items={items} kpis={kpis} selectedId={selectedId} onSelect={(id) => update({ selected: id })} />;
+    return <MobileMapa items={items} kpis={kpis} selectedId={selectedId} onSelect={(id) => navigate(`/ocorrencias/${id}`)} />;
   }
 
   return (
